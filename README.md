@@ -39,7 +39,7 @@ By processing tiles in the latent space, the pipeline ensures smoother transitio
 
 * **Faster Execution:** Parallel tile processing reduces overall computation time.
 
-* **Reduced Memory Usage:** Unet quantization in float8 minimizes GPU memory requirements.
+* **Reduced Memory Usage:** Unet quantization in float8 minimizes GPU memory requirements (works with 8 GiB VRAM).
 
 * **Adaptability:** Works seamlessly across different resolutions and tile sizes.
 

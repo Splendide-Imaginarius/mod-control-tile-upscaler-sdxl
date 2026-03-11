@@ -40,20 +40,27 @@ class Pipeline:
             
             self.controlnet = ControlNetUnionModel.from_pretrained(
                     "brad-twinkl/controlnet-union-sdxl-1.0-promax", torch_dtype=torch.float16
-                ).to(device=device)
-            self.vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16).to(device=device)
+                )
+            self.vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 
             self.pipe = StableDiffusionXLControlNetTileSRPipeline.from_pretrained(
                 MODELS[model_id], controlnet=self.controlnet, vae=self.vae, torch_dtype=torch.float16, variant="fp16"
-            ).to(device=device)
+            )
 
             unet = UNet2DConditionModel.from_pretrained(MODELS[model_id], subfolder="unet", variant="fp16", use_safetensors=True)
             quantize_8bit(unet)  # << Enable this if you have limited VRAM
             self.pipe.unet = unet
 
-            self.pipe.enable_model_cpu_offload()
-            self.pipe.enable_vae_tiling()
-            self.pipe.enable_vae_slicing()
+            if True: # << Enable this if you have limited VRAM
+                self.pipe.enable_model_cpu_offload()
+            else:
+                self.controlnet.to(device=device)
+                self.vae.to(device=device)
+                self.pipe.to(device=device)
+
+            self.pipe.enable_vae_tiling() # << Enable this if you have limited VRAM
+            self.pipe.enable_vae_slicing() # << Enable this if you have limited VRAM
+
             self.last_loaded_model = model_id
             print(f"Model {model_id} loaded.")
 

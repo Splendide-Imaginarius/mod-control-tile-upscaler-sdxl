@@ -15,19 +15,24 @@ device = "cuda"
 # Initialize the models and pipeline
 controlnet = ControlNetUnionModel.from_pretrained(
     "brad-twinkl/controlnet-union-sdxl-1.0-promax", torch_dtype=torch.float16
-).to(device=device)
-vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16).to(device=device)
+)
+vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 
 model_id = "SG161222/RealVisXL_V5.0"
 pipe = StableDiffusionXLControlNetTileSRPipeline.from_pretrained(
     model_id, controlnet=controlnet, vae=vae, torch_dtype=torch.float16, use_safetensors=True, variant="fp16"
-).to(device)
+)
 
 unet = UNet2DConditionModel.from_pretrained(model_id, subfolder="unet", variant="fp16", use_safetensors=True)
 quantize_8bit(unet)  # << Enable this if you have limited VRAM
 pipe.unet = unet
 
-pipe.enable_model_cpu_offload()  # << Enable this if you have limited VRAM
+if True: # << Enable this if you have limited VRAM
+    pipe.enable_model_cpu_offload()
+else:
+    controlnet.to(device=device)
+    vae.to(device=device)
+    pipe.to(device=device)
 pipe.enable_vae_tiling() # << Enable this if you have limited VRAM
 pipe.enable_vae_slicing() # << Enable this if you have limited VRAM
 
